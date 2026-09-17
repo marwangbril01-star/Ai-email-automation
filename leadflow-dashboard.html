@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LeadFlow — Lead Intelligence Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+  :root{
+    --bg:#0a0e17;
+    --panel:#111827;
+    --panel-2:#151d2e;
+    --border:#232f47;
+    --text:#eef2f9;
+    --text-dim:#8a97b3;
+    --text-faint:#5b6884;
+    --accent:#4f8ef7;
+    --accent-soft:rgba(79,142,247,0.14);
+    --hot:#f0533d;
+    --hot-soft:rgba(240,83,61,0.14);
+    --warm:#f2b134;
+    --warm-soft:rgba(242,177,52,0.14);
+    --cold:#38bdf8;
+    --cold-soft:rgba(56,189,248,0.14);
+    --success:#34d399;
+    --success-soft:rgba(52,211,153,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    min-height:100vh;
+    display:flex;
+  }
+  h1,h2,h3,.brand{font-family:'Space Grotesk',system-ui,sans-serif;}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:236px;
+    flex-shrink:0;
+    background:linear-gradient(180deg,#0d1320,#0a0e17);
+    border-right:1px solid var(--border);
+    padding:28px 20px;
+    display:flex;
+    flex-direction:column;
+    gap:32px;
+    position:sticky;
+    top:0;
+    height:100vh;
+  }
+  .brand{font-size:20px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:9px;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);}
+  .brand span{color:var(--accent);}
+  .nav{display:flex;flex-direction:column;gap:4px;margin-top:4px;}
+  .nav-item{
+    padding:10px 12px;border-radius:8px;color:var(--text-dim);font-size:14px;font-weight:500;
+    cursor:pointer;transition:background .15s,color .15s;display:flex;align-items:center;gap:10px;
+  }
+  .nav-item:hover{background:var(--panel-2);color:var(--text);}
+  .nav-item.active{background:var(--accent-soft);color:var(--accent);}
+  .sidebar-footer{margin-top:auto;font-size:12px;color:var(--text-faint);line-height:1.6;}
+  .sidebar-footer b{color:var(--text-dim);}
+
+  /* ---------- Main ---------- */
+  .main{flex:1;padding:28px 36px 60px;max-width:1400px;}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:26px;gap:20px;flex-wrap:wrap;}
+  .topbar h1{font-size:23px;margin:0 0 4px;font-weight:600;}
+  .topbar p{margin:0;color:var(--text-dim);font-size:14px;}
+  .top-actions{display:flex;align-items:center;gap:10px;}
+  .status-pill{
+    font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:20px;display:flex;align-items:center;gap:7px;
+    border:1px solid var(--border);color:var(--text-dim);background:var(--panel);
+  }
+  .status-pill .blip{width:7px;height:7px;border-radius:50%;background:var(--text-faint);}
+  .status-pill.live{color:var(--success);border-color:rgba(52,211,153,0.3);}
+  .status-pill.live .blip{background:var(--success);box-shadow:0 0 8px var(--success);}
+  .status-pill.demo{color:var(--warm);border-color:rgba(242,177,52,0.3);}
+  .status-pill.demo .blip{background:var(--warm);}
+  .btn{
+    background:var(--accent);color:#fff;border:none;padding:9px 16px;border-radius:8px;
+    font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;transition:filter .15s;
+  }
+  .btn:hover{filter:brightness(1.1);}
+  .btn.secondary{background:var(--panel);border:1px solid var(--border);color:var(--text-dim);}
+  .btn.secondary:hover{color:var(--text);}
+
+  .banner{
+    background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--warm);
+    padding:13px 18px;border-radius:8px;font-size:13.5px;color:var(--text-dim);margin-bottom:24px;
+    display:none;
+  }
+  .banner b{color:var(--text);}
+  .banner.show{display:block;}
+
+  /* KPI cards */
+  .kpi-row{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;gap:14px;margin-bottom:24px;}
+  .kpi{
+    background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px 20px;
+    display:flex;flex-direction:column;gap:6px;
+  }
+  .kpi.primary{background:linear-gradient(135deg,var(--panel),#131c30);border-color:rgba(79,142,247,0.35);}
+  .kpi-label{font-size:12px;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+  .kpi-value{font-size:28px;font-weight:700;font-family:'Space Grotesk',sans-serif;}
+  .kpi-sub{font-size:12px;color:var(--text-faint);}
+  .kpi-value.hot{color:var(--hot);}
+  .kpi-value.warm{color:var(--warm);}
+  .kpi-value.cold{color:var(--cold);}
+
+  /* Charts */
+  .chart-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:24px;}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px 20px;}
+  .card h3{font-size:14px;margin:0 0 14px;font-weight:600;color:var(--text);}
+  .card h3 span{color:var(--text-faint);font-weight:400;font-size:12px;margin-left:6px;font-family:'Inter',sans-serif;}
+  .chart-wrap{position:relative;height:190px;}
+
+  /* Table section */
+  .table-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+  .table-head{
+    display:flex;justify-content:space-between;align-items:center;padding:18px 20px 14px;
+    border-bottom:1px solid var(--border);gap:16px;flex-wrap:wrap;
+  }
+  .table-head h3{margin:0;font-size:14px;font-weight:600;}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .filter-btn{
+    background:transparent;border:1px solid var(--border);color:var(--text-dim);padding:6px 13px;
+    border-radius:20px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;
+    transition:all .15s;
+  }
+  .filter-btn:hover{color:var(--text);}
+  .filter-btn.active{background:var(--accent-soft);border-color:rgba(79,142,247,0.4);color:var(--accent);}
+  .search-box{
+    background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 12px;
+    color:var(--text);font-size:13px;font-family:'Inter',sans-serif;min-width:180px;
+  }
+  .search-box::placeholder{color:var(--text-faint);}
+  .search-box:focus{outline:none;border-color:var(--accent);}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{
+    text-align:left;padding:11px 20px;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;
+    color:var(--text-faint);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap;
+  }
+  tbody td{padding:13px 20px;border-bottom:1px solid var(--border);color:var(--text-dim);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--panel-2);}
+  td.name-cell{color:var(--text);font-weight:600;}
+  td.name-cell .email{display:block;color:var(--text-faint);font-weight:400;font-size:11.5px;margin-top:2px;}
+  .badge{
+    display:inline-block;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.03em;
+  }
+  .badge.hot{background:var(--hot-soft);color:var(--hot);}
+  .badge.warm{background:var(--warm-soft);color:var(--warm);}
+  .badge.cold{background:var(--cold-soft);color:var(--cold);}
+  .badge.due{background:var(--warm-soft);color:var(--warm);border:1px solid rgba(242,177,52,0.4);}
+  .badge.ontrack{background:var(--success-soft);color:var(--success);}
+  .score-bar-wrap{display:flex;align-items:center;gap:8px;}
+  .score-bar{width:56px;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+  .score-bar div{height:100%;border-radius:3px;}
+  .empty-row td{text-align:center;color:var(--text-faint);padding:32px;}
+
+  .setup-toggle{color:var(--accent);font-size:12.5px;cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
+  .setup-panel{
+    display:none;background:var(--panel);border:1px solid var(--border);border-radius:12px;
+    padding:20px 22px;margin-bottom:24px;font-size:13.5px;color:var(--text-dim);line-height:1.7;
+  }
+  .setup-panel.show{display:block;}
+  .setup-panel h3{margin-top:0;font-size:14px;color:var(--text);}
+  .setup-panel code{background:var(--bg);border:1px solid var(--border);padding:2px 6px;border-radius:4px;font-size:12px;color:var(--accent);}
+  .setup-panel ol{padding-left:20px;margin:10px 0;}
+  .setup-panel li{margin-bottom:6px;}
+
+  @media (max-width:1100px){
+    .kpi-row{grid-template-columns:1fr 1fr 1fr;}
+    .chart-row{grid-template-columns:1fr;}
+  }
+  @media (max-width:760px){
+    body{flex-direction:column;}
+    .sidebar{width:100%;height:auto;position:relative;flex-direction:row;align-items:center;padding:16px 20px;}
+    .nav{flex-direction:row;margin-top:0;}
+    .sidebar-footer{display:none;}
+    .main{padding:20px;}
+    .kpi-row{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand"><span class="dot"></span>Lead<span>Flow</span></div>
+  <nav class="nav">
+    <div class="nav-item active">◆ Overview</div>
+    <div class="nav-item" onclick="setFilter('__followup_due')">◆ Follow-ups Due</div>
+    <div class="nav-item" onclick="toggleSetup()">◆ Connect Live Data</div>
+  </nav>
+  <div class="sidebar-footer">
+    <b>AI Lead Qualification &amp; Follow-Up System</b><br>
+    Built for real-time lead scoring, routing and follow-up tracking.
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1>Lead Intelligence Dashboard</h1>
+      <p id="subheading">Live view of every lead captured, qualified and followed up by your AI system.</p>
+    </div>
+    <div class="top-actions">
+      <div id="statusPill" class="status-pill demo"><span class="blip"></span><span id="statusText">Demo data</span></div>
+      <button class="btn secondary" onclick="loadData()">Refresh</button>
+    </div>
+  </div>
+
+  <div id="banner" class="banner">
+    <b>Showing demo data.</b> This is sample data so the dashboard has something to show.
+    <span class="setup-toggle" onclick="toggleSetup()">Connect your live Google Sheet →</span>
+  </div>
+
+  <div id="setupPanel" class="setup-panel">
+    <h3>Connect your live Google Sheet</h3>
+    <ol>
+      <li>Open your <b>AI Lead Database</b> sheet, click <b>Share</b> → <b>General access</b> → set to <i>"Anyone with the link"</i> → <i>Viewer</i>.</li>
+      <li>Copy the Sheet ID from the URL — the long string between <code>/d/</code> and <code>/edit</code>.</li>
+      <li>Open this dashboard file in a text editor, find the line near the top of the script that says <code>SHEET_ID = "..."</code>, and paste your ID in.</li>
+      <li>Save and reopen the file (or refresh, if hosted online). It will automatically switch from demo to live data.</li>
+    </ol>
+    <p style="margin-bottom:0;color:var(--text-faint);font-size:12.5px;">Note: this makes the sheet viewable by anyone with the link — fine for internal/demo use. For a client-facing production system, route this through a small backend instead of direct public sheet access.</p>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi primary">
+      <div class="kpi-label">Total Leads</div>
+      <div class="kpi-value" id="kpiTotal">—</div>
+      <div class="kpi-sub" id="kpiTotalSub">across all channels</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">🔥 Hot</div>
+      <div class="kpi-value hot" id="kpiHot">—</div>
+      <div class="kpi-sub" id="kpiHotSub"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">🟡 Warm</div>
+      <div class="kpi-value warm" id="kpiWarm">—</div>
+      <div class="kpi-sub" id="kpiWarmSub"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">🔵 Cold</div>
+      <div class="kpi-value cold" id="kpiCold">—</div>
+      <div class="kpi-sub" id="kpiColdSub"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Avg. Score</div>
+      <div class="kpi-value" id="kpiAvgScore">—</div>
+      <div class="kpi-sub" id="kpiDue">— follow-ups due</div>
+    </div>
+  </div>
+
+  <div class="chart-row">
+    <div class="card">
+      <h3>Lead Quality<span>distribution</span></h3>
+      <div class="chart-wrap"><canvas id="chartQuality"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Leads by Service<span>volume</span></h3>
+      <div class="chart-wrap"><canvas id="chartService"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Leads by Location<span>top areas</span></h3>
+      <div class="chart-wrap"><canvas id="chartLocation"></canvas></div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-head">
+      <h3>All Leads</h3>
+      <div class="filters">
+        <input class="search-box" id="searchBox" placeholder="Search name or location..." oninput="renderTable()">
+        <button class="filter-btn active" data-f="all" onclick="setFilter('all')">All</button>
+        <button class="filter-btn" data-f="hot" onclick="setFilter('hot')">Hot</button>
+        <button class="filter-btn" data-f="warm" onclick="setFilter('warm')">Warm</button>
+        <button class="filter-btn" data-f="cold" onclick="setFilter('cold')">Cold</button>
+        <button class="filter-btn" data-f="__followup_due" onclick="setFilter('__followup_due')">Follow-up Due</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Lead</th><th>Service</th><th>Budget</th><th>Location</th>
+            <th>Score</th><th>Quality</th><th>Status</th><th>Next Follow-up</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script>
+/* ============ CONFIGURATION ============ */
+const SHEET_ID = "1XHUW8hWD2qV9CBsieX3qr-Po1j9BzSb0dxMjhLaN35Y"; // <-- paste your Google Sheet ID here to go live
+const GID = "0";
+
+/* ============ DEMO DATA (shown until a live sheet is connected) ============ */
+const DEMO_ROWS = [
+  {Name:"Marwan Gabr", Email:"marwang@example.com", Service:"Real Estate", Budget:3000000, Location:"New Cairo", Score:85, Quality:"HOT", Status:"Follow-up Sent", NextFollowup:"2026-09-19"},
+  {Name:"Sara Adel", Email:"sara.adel@example.com", Service:"Real Estate", Budget:1800000, Location:"6th of October", Score:78, Quality:"HOT", Status:"Follow-up Sent", NextFollowup:"2026-09-18"},
+  {Name:"Omar Khaled", Email:"omar.k@example.com", Service:"Real Estate", Budget:950000, Location:"Sheikh Zayed", Score:62, Quality:"WARM", Status:"Follow-up Sent", NextFollowup:"2026-09-20"},
+  {Name:"Nourhan Fathy", Email:"nourhan.f@example.com", Service:"Real Estate", Budget:4200000, Location:"New Cairo", Score:91, Quality:"HOT", Status:"Replied", NextFollowup:"2026-09-22"},
+  {Name:"Ahmed Samir", Email:"ahmed.samir@example.com", Service:"Rentals", Budget:25000, Location:"Maadi", Score:44, Quality:"COLD", Status:"Follow-up Sent", NextFollowup:"2026-09-17"},
+  {Name:"Yasmin Tarek", Email:"yasmin.t@example.com", Service:"Real Estate", Budget:2200000, Location:"New Capital", Score:73, Quality:"WARM", Status:"Follow-up Sent", NextFollowup:"2026-09-17"},
+  {Name:"Karim Mostafa", Email:"karim.m@example.com", Service:"Commercial", Budget:6000000, Location:"New Cairo", Score:88, Quality:"HOT", Status:"Contacted", NextFollowup:"2026-09-21"},
+  {Name:"Heba Nasser", Email:"heba.n@example.com", Service:"Rentals", Budget:18000, Location:"Zamalek", Score:38, Quality:"COLD", Status:"Follow-up Sent", NextFollowup:"2026-09-25"},
+  {Name:"Tarek Younes", Email:"tarek.y@example.com", Service:"Real Estate", Budget:1500000, Location:"Sheikh Zayed", Score:66, Quality:"WARM", Status:"Follow-up Sent", NextFollowup:"2026-09-19"},
+  {Name:"Mona Ibrahim", Email:"mona.i@example.com", Service:"Commercial", Budget:3300000, Location:"New Capital", Score:81, Quality:"HOT", Status:"Follow-up Sent", NextFollowup:"2026-09-16"},
+  {Name:"Fady Rafik", Email:"fady.r@example.com", Service:"Real Estate", Budget:900000, Location:"6th of October", Score:52, Quality:"WARM", Status:"Follow-up Sent", NextFollowup:"2026-09-23"},
+  {Name:"Laila Hassan", Email:"laila.h@example.com", Service:"Rentals", Budget:22000, Location:"Maadi", Score:29, Quality:"COLD", Status:"No Response", NextFollowup:"2026-09-17"}
+];
+
+let ALL_LEADS = [];
+let currentFilter = "all";
+let charts = {};
+
+function scoreColor(q){
+  if(q==="HOT") return "var(--hot)";
+  if(q==="WARM") return "var(--warm)";
+  return "var(--cold)";
+}
+
+function normalizeRow(r){
+  // Accepts either demo-shaped objects or raw CSV header-mapped objects
+  const quality = (r.Quality || r.quality || "COLD").toString().trim().toUpperCase();
+  return {
+    name: r.Name || r.name || "Unknown",
+    email: r.Email || r.email || "",
+    service: r.Service || r.service || "—",
+    budget: r.Budget || r.budget || "",
+    location: r.Location || r.location || "—",
+    score: parseInt(r.Score || r.score || 0) || 0,
+    quality: ["HOT","WARM","COLD"].includes(quality) ? quality : "COLD",
+    status: r["Lead Status"] || r.Status || r.status || "New",
+    nextFollowup: r["Next Follow-up Date"] || r.NextFollowup || ""
+  };
+}
+
+function isDueSoon(dateStr){
+  if(!dateStr) return false;
+  const d = new Date(dateStr);
+  if(isNaN(d)) return false;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const diffDays = (d - today) / 86400000;
+  return diffDays <= 1; // due today or overdue
+}
+
+function fmtBudget(b){
+  const n = parseFloat(b);
+  if(!n || isNaN(n)) return "—";
+  if(n >= 1000000) return (n/1000000).toFixed(1).replace(/\.0$/,"") + "M EGP";
+  if(n >= 1000) return (n/1000).toFixed(0) + "K EGP";
+  return n + " EGP";
+}
+
+function renderKPIs(){
+  const total = ALL_LEADS.length;
+  const hot = ALL_LEADS.filter(l=>l.quality==="HOT").length;
+  const warm = ALL_LEADS.filter(l=>l.quality==="WARM").length;
+  const cold = ALL_LEADS.filter(l=>l.quality==="COLD").length;
+  const avgScore = total ? Math.round(ALL_LEADS.reduce((s,l)=>s+l.score,0)/total) : 0;
+  const due = ALL_LEADS.filter(l=>isDueSoon(l.nextFollowup)).length;
+
+  document.getElementById("kpiTotal").textContent = total;
+  document.getElementById("kpiTotalSub").textContent = total ? `${Math.round((hot/total)*100)}% are hot` : "no leads yet";
+  document.getElementById("kpiHot").textContent = hot;
+  document.getElementById("kpiHotSub").textContent = total ? Math.round((hot/total)*100)+"% of total" : "";
+  document.getElementById("kpiWarm").textContent = warm;
+  document.getElementById("kpiWarmSub").textContent = total ? Math.round((warm/total)*100)+"% of total" : "";
+  document.getElementById("kpiCold").textContent = cold;
+  document.getElementById("kpiColdSub").textContent = total ? Math.round((cold/total)*100)+"% of total" : "";
+  document.getElementById("kpiAvgScore").textContent = avgScore;
+  document.getElementById("kpiDue").textContent = `${due} follow-up${due===1?"":"s"} due`;
+}
+
+function destroyCharts(){
+  Object.values(charts).forEach(c=>c && c.destroy());
+}
+
+function renderCharts(){
+  destroyCharts();
+  const fontColor = "#8a97b3";
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.color = fontColor;
+
+  // Quality donut
+  const hot = ALL_LEADS.filter(l=>l.quality==="HOT").length;
+  const warm = ALL_LEADS.filter(l=>l.quality==="WARM").length;
+  const cold = ALL_LEADS.filter(l=>l.quality==="COLD").length;
+  charts.quality = new Chart(document.getElementById("chartQuality"), {
+    type:"doughnut",
+    data:{labels:["Hot","Warm","Cold"], datasets:[{data:[hot,warm,cold], backgroundColor:["#f0533d","#f2b134","#38bdf8"], borderWidth:0}]},
+    options:{cutout:"68%", plugins:{legend:{position:"bottom", labels:{boxWidth:10, padding:14, font:{size:11.5}}}}}
+  });
+
+  // By service
+  const byService = {};
+  ALL_LEADS.forEach(l=>{ byService[l.service] = (byService[l.service]||0)+1; });
+  const svcLabels = Object.keys(byService);
+  charts.service = new Chart(document.getElementById("chartService"), {
+    type:"bar",
+    data:{labels:svcLabels, datasets:[{data:svcLabels.map(s=>byService[s]), backgroundColor:"#4f8ef7", borderRadius:6, maxBarThickness:34}]},
+    options:{plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}, y:{grid:{color:"#1c2739"}, ticks:{precision:0}}}}
+  });
+
+  // By location (top 6)
+  const byLoc = {};
+  ALL_LEADS.forEach(l=>{ byLoc[l.location] = (byLoc[l.location]||0)+1; });
+  const locEntries = Object.entries(byLoc).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  charts.location = new Chart(document.getElementById("chartLocation"), {
+    type:"bar",
+    data:{labels:locEntries.map(e=>e[0]), datasets:[{data:locEntries.map(e=>e[1]), backgroundColor:"#8b5cf6", borderRadius:6, maxBarThickness:26}]},
+    options:{indexAxis:"y", plugins:{legend:{display:false}}, scales:{x:{grid:{color:"#1c2739"}, ticks:{precision:0}}, y:{grid:{display:false}}}}
+  });
+}
+
+function setFilter(f){
+  currentFilter = f;
+  document.querySelectorAll(".filter-btn").forEach(b=>b.classList.toggle("active", b.dataset.f===f));
+  renderTable();
+}
+
+function renderTable(){
+  const q = document.getElementById("searchBox").value.trim().toLowerCase();
+  let rows = ALL_LEADS.filter(l=>{
+    if(currentFilter==="hot" && l.quality!=="HOT") return false;
+    if(currentFilter==="warm" && l.quality!=="WARM") return false;
+    if(currentFilter==="cold" && l.quality!=="COLD") return false;
+    if(currentFilter==="__followup_due" && !isDueSoon(l.nextFollowup)) return false;
+    if(q && !(l.name.toLowerCase().includes(q) || l.location.toLowerCase().includes(q))) return false;
+    return true;
+  });
+
+  const tbody = document.getElementById("tableBody");
+  if(rows.length===0){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="8">No leads match this filter yet.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(l=>{
+    const due = isDueSoon(l.nextFollowup);
+    return `<tr>
+      <td class="name-cell">${l.name}<span class="email">${l.email}</span></td>
+      <td>${l.service}</td>
+      <td>${fmtBudget(l.budget)}</td>
+      <td>${l.location}</td>
+      <td><div class="score-bar-wrap">${l.score}<div class="score-bar"><div style="width:${l.score}%;background:${scoreColor(l.quality)}"></div></div></div></td>
+      <td><span class="badge ${l.quality.toLowerCase()}">${l.quality}</span></td>
+      <td>${l.status}</td>
+      <td>${l.nextFollowup ? `<span class="badge ${due?'due':'ontrack'}">${l.nextFollowup}${due?' · due':''}</span>` : '—'}</td>
+    </tr>`;
+  }).join("");
+}
+
+function renderAll(){
+  renderKPIs();
+  renderCharts();
+  renderTable();
+}
+
+function toggleSetup(){
+  document.getElementById("setupPanel").classList.toggle("show");
+}
+
+function setStatus(live){
+  const pill = document.getElementById("statusPill");
+  const text = document.getElementById("statusText");
+  const banner = document.getElementById("banner");
+  if(live){
+    pill.classList.remove("demo"); pill.classList.add("live");
+    text.textContent = "Live data";
+    banner.classList.remove("show");
+  } else {
+    pill.classList.remove("live"); pill.classList.add("demo");
+    text.textContent = "Demo data";
+    banner.classList.add("show");
+  }
+}
+
+function loadData(){
+  if(!SHEET_ID){
+    ALL_LEADS = DEMO_ROWS.map(normalizeRow);
+    setStatus(false);
+    renderAll();
+    return;
+  }
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
+  Papa.parse(url, {
+    download:true,
+    header:true,
+    skipEmptyLines:true,
+    complete:function(results){
+      if(!results.data || results.data.length===0){
+        ALL_LEADS = DEMO_ROWS.map(normalizeRow);
+        setStatus(false);
+      } else {
+        ALL_LEADS = results.data.map(normalizeRow);
+        setStatus(true);
+      }
+      renderAll();
+    },
+    error:function(){
+      ALL_LEADS = DEMO_ROWS.map(normalizeRow);
+      setStatus(false);
+      renderAll();
+    }
+  });
+}
+
+loadData();
+</script>
+</body>
+</html>

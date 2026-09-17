@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeadFlow | Get Started</title>
+
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        min-height: 100vh;
+        background: #0b0f19;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+    }
+
+    .page {
+        width: 100%;
+        max-width: 1100px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        background: #111827;
+        border: 1px solid #263041;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+    }
+
+    .hero {
+        padding: 60px;
+        background:
+            radial-gradient(
+                circle at top left,
+                rgba(59, 130, 246, 0.18),
+                transparent 40%
+            ),
+            #111827;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .logo {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+    }
+
+    .logo span {
+        color: #60a5fa;
+    }
+
+    .hero-content {
+        margin: 80px 0;
+    }
+
+    .badge {
+        display: inline-block;
+        color: #93c5fd;
+        background: rgba(59, 130, 246, 0.12);
+        border: 1px solid rgba(96, 165, 250, 0.25);
+        padding: 7px 12px;
+        border-radius: 100px;
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+
+    h1 {
+        font-size: clamp(38px, 5vw, 58px);
+        line-height: 1.05;
+        letter-spacing: -2px;
+        margin-bottom: 20px;
+    }
+
+    .hero-content p {
+        color: #9ca3af;
+        font-size: 17px;
+        line-height: 1.6;
+        max-width: 440px;
+    }
+
+    .features {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .feature {
+        color: #cbd5e1;
+        font-size: 14px;
+    }
+
+    .feature::before {
+        content: "✓";
+        color: #60a5fa;
+        margin-right: 10px;
+        font-weight: bold;
+    }
+
+    .form-section {
+        background: #ffffff;
+        color: #111827;
+        padding: 55px;
+    }
+
+    .form-section h2 {
+        font-size: 30px;
+        letter-spacing: -1px;
+        margin-bottom: 8px;
+    }
+
+    .form-section .subtitle {
+        color: #6b7280;
+        margin-bottom: 30px;
+        line-height: 1.5;
+    }
+
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+    label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 7px;
+    }
+
+    input,
+    select,
+    textarea {
+        width: 100%;
+        border: 1px solid #d1d5db;
+        border-radius: 9px;
+        padding: 12px 14px;
+        font-size: 14px;
+        font-family: inherit;
+        outline: none;
+        transition: 0.2s ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+    }
+
+    textarea {
+        min-height: 95px;
+        resize: vertical;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    button {
+        width: 100%;
+        margin-top: 8px;
+        padding: 14px;
+        border: none;
+        border-radius: 9px;
+        background: #111827;
+        color: white;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    button:hover {
+        background: #1f2937;
+        transform: translateY(-1px);
+    }
+
+    button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .spinner {
+        display: none;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.35);
+        border-top: 2px solid white;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        margin-left: 8px;
+        vertical-align: middle;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .success-message {
+        animation: successFade 0.4s ease;
+    }
+
+    @keyframes successFade {
+        from {
+            opacity: 0;
+            transform: translateY(5px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    #result {
+        text-align: center;
+        margin-top: 18px;
+        font-size: 14px;
+        min-height: 20px;
+    }
+
+    .privacy {
+        text-align: center;
+        margin-top: 15px;
+        font-size: 12px;
+        color: #9ca3af;
+    }
+
+    @media (max-width: 800px) {
+        .page {
+            grid-template-columns: 1fr;
+            max-width: 550px;
+        }
+
+        .hero {
+            padding: 40px;
+        }
+
+        .hero-content {
+            margin: 50px 0;
+        }
+
+        .form-section {
+            padding: 40px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .hero,
+        .form-section {
+            padding: 30px 22px;
+        }
+
+        h1 {
+            font-size: 40px;
+        }
+    }
+</style>
+
+
+</head>
+
+<body>
+
+
+<div class="page">
+
+    <section class="hero">
+
+        <div class="logo">
+            Lead<span>Flow</span>
+        </div>
+
+        <div class="hero-content">
+
+            <div class="badge">
+                AI-Powered Lead Management
+            </div>
+
+            <h1>
+                Let's find your perfect solution.
+            </h1>
+
+            <p>
+                Tell us what you're looking for and our team will help you
+                find the best option based on your needs.
+            </p>
+
+        </div>
+
+        <div class="features">
+
+            <div class="feature">
+                Personalized recommendations
+            </div>
+
+            <div class="feature">
+                Fast response from our team
+            </div>
+
+            <div class="feature">
+                Your information stays private
+            </div>
+
+        </div>
+
+    </section>
+
+    <section class="form-section">
+
+        <h2>
+            Get started
+        </h2>
+
+        <p class="subtitle">
+            Fill in your details and we'll get back to you shortly.
+        </p>
+
+        <form id="leadForm">
+
+            <div class="form-group">
+
+                <label for="name">
+                    Full Name
+                </label>
+
+                <input
+                    type="text"
+                    id="name"
+                    placeholder="Your Name"
+                    required
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label for="email">
+                    Email Address
+                </label>
+
+                <input
+                    type="email"
+                    id="email"
+                    placeholder="john@example.com"
+                    required
+                >
+
+            </div>
+
+            <div class="form-row">
+
+                <div class="form-group">
+
+                    <label for="service">
+                        Service
+                    </label>
+
+                    <select id="service" required>
+
+                        <option value="" disabled selected>
+                            Select
+                        </option>
+
+                        <option value="Real Estate">
+                            Real Estate
+                        </option>
+
+                        <option value="Consultation">
+                            Consultation
+                        </option>
+
+                        <option value="Other">
+                            Other
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="budget">
+                        Budget
+                    </label>
+
+                    <input
+                        type="text"
+                        id="budget"
+                        placeholder="Your Budget"
+                    >
+
+                </div>
+
+            </div>
+
+            <div class="form-group">
+
+                <label for="location">
+                    Preferred Location
+                </label>
+
+                <input
+                    type="text"
+                    id="location"
+                    placeholder="e.g. New Cairo"
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label for="message">
+                    Tell us more
+                </label>
+
+                <textarea
+                    id="message"
+                    placeholder="What are you looking for?"
+                ></textarea>
+
+            </div>
+
+            <button type="submit" id="submitBtn">
+
+                <span id="btnText">
+                    Submit Request →
+                </span>
+
+                <span id="spinner" class="spinner"></span>
+
+            </button>
+
+        </form>
+
+        <div id="result"></div>
+
+        <div class="privacy">
+            🔒 Your information is secure and will never be shared.
+        </div>
+
+    </section>
+
+</div>
+
+<script>
+
+    document
+        .getElementById("leadForm")
+        .addEventListener("submit", async function(event) {
+
+            event.preventDefault();
+
+            const submitBtn =
+                document.getElementById("submitBtn");
+
+            const result =
+                document.getElementById("result");
+
+            const btnText =
+                document.getElementById("btnText");
+
+            const spinner =
+                document.getElementById("spinner");
+
+            const data = {
+
+                name:
+                    document.getElementById("name").value,
+
+                Email:
+                    document.getElementById("email").value,
+
+                Service:
+                    document.getElementById("service").value,
+
+                Budget:
+                    document.getElementById("budget").value,
+
+                Location:
+                    document.getElementById("location").value,
+
+                Message:
+                    document.getElementById("message").value
+            };
+
+            const webhookURL =
+                "http://localhost:5678/webhook-test/Lead";
+
+            submitBtn.disabled = true;
+
+            btnText.innerHTML =
+                "Analyzing your request";
+
+            spinner.style.display =
+                "inline-block";
+
+            result.innerHTML = "";
+
+            try {
+
+                const response =
+                    await fetch(webhookURL, {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(data)
+                    });
+
+                if (response.ok) {
+
+                    result.innerHTML =
+                        '<span class="success-message">' +
+                        '✓ Request submitted successfully' +
+                        '</span>';
+
+                    result.style.color =
+                        "#16a34a";
+
+                    document
+                        .getElementById("leadForm")
+                        .reset();
+
+                } else {
+
+                    result.innerHTML =
+                        "Something went wrong. Please try again.";
+
+                    result.style.color =
+                        "#dc2626";
+                }
+
+            } catch (error) {
+
+                result.innerHTML =
+                    "Could not connect. Please try again.";
+
+                result.style.color =
+                    "#dc2626";
+
+                console.error(error);
+
+            }
+
+            submitBtn.disabled = false;
+
+            btnText.innerHTML =
+                "Submit Request →";
+
+            spinner.style.display =
+                "none";
+
+        });
+
+</script>
+
+
+</body>
+</html>
